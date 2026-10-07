@@ -1,9 +1,9 @@
 {
     "id": "twilio",
     "name": "Twilio SMS",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Send SMS through Twilio's Messages API. Admin-editable credentials and sender, plus a test-text button. A capability for core and other services: answers the sms.providers and sms.send hooks",
-    "category": "business",
+    "category": "sms",
     "author": {
         "name": "Gavin Cox"
     },
