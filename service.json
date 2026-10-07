@@ -1,0 +1,53 @@
+{
+    "id": "twilio",
+    "name": "Twilio SMS",
+    "version": "1.0.0",
+    "description": "Texts the customer when an order is paid, through Twilio's Messages API. Admin-editable credentials, sender and message template, plus a test-text button; order texts are production-only",
+    "category": "business",
+    "author": {
+        "name": "Gavin Cox"
+    },
+    "license": "proprietary",
+
+    "requires": {
+        "osmium": ">=1.0.0",
+        "php": ">=8.1",
+        "services": []
+    },
+
+    "autoload": [
+        "models"
+    ],
+
+    "hooks": {
+        "order.paid": ["Osmium\\Services\\Twilio\\Models\\TwilioSms::orderPaid"]
+    },
+
+    "admin": {
+        "menu": {
+            "section": "Content",
+            "items": [
+                {
+                    "id": "twilio",
+                    "label": "Twilio SMS",
+                    "icon": "bx bx-message-dots",
+                    "route": "admin/settings/twilio",
+                    "activePattern": "admin/settings/twilio",
+                    "role": null
+                }
+            ]
+        },
+        "routes": {
+            "admin/settings/twilio": {
+                "controller": "controllers/TwilioController.php",
+                "class": "Osmium\\Services\\Twilio\\Controllers\\TwilioController",
+                "method": "index",
+                "title": "Twilio SMS"
+            }
+        }
+    },
+
+    "setup": {
+        "postInstallNote": "Disabled by default. Enter the Account SID, Auth Token and a sender (a Twilio number, an alphanumeric sender ID, or a Messaging Service SID) on the Twilio SMS settings page, press Send test text, then switch on Text customers when an order is paid. Order texts only send in production, and only for orders with a valid phone number."
+    }
+}
