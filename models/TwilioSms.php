@@ -8,6 +8,10 @@ namespace Osmium\Services\Twilio\Models;
  * Sends SMS through Twilio. A capability only: it never decides when to
  * text. Core or another service asks through the sms.send hook.
  *
+ * sms.providers - collect(); no payload. Returns this provider's descriptor:
+ *            id, label, ready (enabled and credentials valid) and settingsRoute,
+ *            so Shop settings can offer SMS only when it can actually send.
+ *
  * sms.send - handle(); payload: to (string, any common phone format), body
  *            (string). Returns null when this service is off or not
  *            configured (so the caller can tell nothing handled it), else
@@ -20,6 +24,21 @@ namespace Osmium\Services\Twilio\Models;
 class TwilioSms
 {
     private const MESSAGES_URL = 'https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json';
+
+    /**
+     * @return array{id: string, label: string, ready: bool, settingsRoute: string}
+     */
+    public static function provider(): array
+    {
+        $config = TwilioConfig::get();
+
+        return [
+            'id' => 'twilio',
+            'label' => 'Twilio SMS',
+            'ready' => ($config->enabled ?? false) && self::isConfigured($config),
+            'settingsRoute' => 'admin/settings/twilio',
+        ];
+    }
 
     /**
      * @param array<string, mixed> $payload

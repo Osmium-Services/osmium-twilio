@@ -1,8 +1,8 @@
 {
     "id": "twilio",
     "name": "Twilio SMS",
-    "version": "1.0.0",
-    "description": "Send SMS through Twilio's Messages API. Admin-editable credentials and sender, plus a test-text button. A capability for core and other services: answers the sms.send hook",
+    "version": "1.1.0",
+    "description": "Send SMS through Twilio's Messages API. Admin-editable credentials and sender, plus a test-text button. A capability for core and other services: answers the sms.providers and sms.send hooks",
     "category": "business",
     "author": {
         "name": "Gavin Cox"
@@ -15,11 +15,14 @@
         "services": []
     },
 
+    "provides": ["sms"],
+
     "autoload": [
         "models"
     ],
 
     "hooks": {
+        "sms.providers": ["Osmium\\Services\\Twilio\\Models\\TwilioSms::provider"],
         "sms.send": ["Osmium\\Services\\Twilio\\Models\\TwilioSms::send"]
     },
 
@@ -48,6 +51,6 @@
     },
 
     "setup": {
-        "postInstallNote": "Disabled by default. Enter the Account SID, Auth Token and a sender (a Twilio number, an alphanumeric sender ID, or a Messaging Service SID) on the Twilio SMS settings page, press Send test text, then switch on Send SMS through Twilio. This service only sends; whatever wants to text (core or another service) calls the sms.send hook."
+        "postInstallNote": "Disabled by default. Enter the Account SID, Auth Token and a sender (a Twilio number, an alphanumeric sender ID, or a Messaging Service SID) on the Twilio SMS settings page, press Send test text, then switch on Send SMS through Twilio. This service only sends; core and other services text through the sms.send hook. Only one SMS provider can be installed at a time."
     }
 }
