@@ -12,9 +12,6 @@ namespace Osmium\Services\Twilio\Models;
  */
 class TwilioConfig
 {
-    public const DEFAULT_TEMPLATE = 'Thanks {name}, we have received your payment for order {order_ref} ({total}).';
-    public const MAX_TEMPLATE_LENGTH = 320;
-
     private static ?object $config = null;
     private static string $configPath = 'app/config/services/twilio.json.php';
 
@@ -89,24 +86,6 @@ class TwilioConfig
         return \preg_match(pattern: '/^\+[1-9]\d{6,14}$/', subject: $number) === 1;
     }
 
-    /**
-     * The site's environment from core's config file. Hook handlers run with
-     * no page context, so they read it here. Empty when unreadable.
-     */
-    public static function siteEnvironment(): string
-    {
-        $file = 'app/config/config.json.php';
-        if (!\file_exists($file)) return '';
-
-        $content = (string) \file_get_contents($file);
-        $jsonStart = \strpos(haystack: $content, needle: '{');
-        if ($jsonStart === false) return '';
-
-        $decoded = \json_decode(\substr(string: $content, offset: $jsonStart));
-
-        return (string) ($decoded->site->environment ?? '');
-    }
-
     private static function defaults(): object
     {
         return (object) [
@@ -114,7 +93,6 @@ class TwilioConfig
             'accountSid' => '',
             'authToken' => '',
             'sender' => '',
-            'template' => self::DEFAULT_TEMPLATE,
         ];
     }
 }

@@ -26,8 +26,7 @@ class TwilioController extends AdminController
                 "enabled": false,
                 "accountSid": "",
                 "authToken": "",
-                "sender": "",
-                "template": ""
+                "sender": ""
             }
         }
         JSON;
@@ -63,8 +62,6 @@ class TwilioController extends AdminController
         $enabled = isset($_POST['enabled']);
         $accountSid = \trim($_POST['account_sid'] ?? '');
         $sender = \trim($_POST['sender'] ?? '');
-        $template = \trim($_POST['template'] ?? '');
-        if ($template === '') $template = TwilioConfig::DEFAULT_TEMPLATE;
 
         $postedToken = \trim($_POST['auth_token'] ?? '');
         $authToken = $postedToken === '' ? (string) (TwilioConfig::get()->authToken ?? '') : $postedToken; // Blank keeps the stored secret
@@ -74,7 +71,6 @@ class TwilioController extends AdminController
             accountSid: $accountSid,
             authToken: $authToken,
             sender: $sender,
-            template: $template,
         );
         if ($error !== null) {
             $_SESSION['twilio_settings_error'] = $error;
@@ -86,7 +82,6 @@ class TwilioController extends AdminController
             accountSid: $accountSid,
             authToken: $authToken,
             sender: $sender,
-            template: $template,
         );
 
         $this->admin->model->changelog->log(
@@ -100,7 +95,7 @@ class TwilioController extends AdminController
         $this->redirect('settings/twilio/');
     }
 
-    private function validate(bool $enabled, string $accountSid, string $authToken, string $sender, string $template): ?string
+    private function validate(bool $enabled, string $accountSid, string $authToken, string $sender): ?string
     {
         $hasAnyCredential = $accountSid !== '' || $authToken !== '' || $sender !== '';
         $needsValidCredentials = $enabled || $hasAnyCredential;
@@ -113,9 +108,6 @@ class TwilioController extends AdminController
         }
         if ($needsValidCredentials && !TwilioConfig::isValidSender($sender)) {
             return 'Sender must be a number like +447700900123, an alphanumeric sender ID (up to 11 characters, at least one letter), or a Messaging Service SID starting MG.';
-        }
-        if (\mb_strlen($template) > TwilioConfig::MAX_TEMPLATE_LENGTH) {
-            return 'Message is too long. Keep it under ' . TwilioConfig::MAX_TEMPLATE_LENGTH . ' characters.';
         }
 
         return null;
@@ -132,13 +124,7 @@ class TwilioController extends AdminController
         } elseif ($to === '') {
             $_SESSION['twilio_settings_error'] = 'Enter a mobile number to text, such as 07700 900123 or +447700900123.';
         } else {
-            $body = TwilioSms::render(template: (string) $config->template, order: [
-                'customer_name' => 'Test',
-                'order_ref' => 'TEST-0001',
-                'total_inc_tax' => 12.34,
-                'currency' => 'GBP',
-            ]);
-            $_SESSION['twilio_test_result'] = TwilioSms::send(config: $config, to: $to, body: $body);
+            $_SESSION['twilio_test_result'] = TwilioSms::deliver(config: $config, to: $to, body: 'This is a test text from your Osmium site.');
         }
 
         $this->redirect('settings/twilio/');
@@ -149,7 +135,6 @@ class TwilioController extends AdminController
         string $accountSid,
         string $authToken,
         string $sender,
-        string $template,
     ): void
     {
         $configExists = \file_exists(self::CONFIG_FILE_PATH);
@@ -166,7 +151,6 @@ class TwilioController extends AdminController
             'accountSid' => $accountSid,
             'authToken' => $authToken,
             'sender' => $sender,
-            'template' => $template,
         ];
 
         $newJson = \json_encode(

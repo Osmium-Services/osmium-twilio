@@ -5,55 +5,38 @@ declare(strict_types=1);
 namespace Osmium\Services\Twilio\Models;
 
 /**
- * Texts the customer when an order is paid.
+ * Sends SMS through Twilio. A capability only: it never decides when to
+ * text. Core or another service asks through the sms.send hook.
  *
- * Driven by core's order.paid hook, which fires once per order whichever
- * route paid it (the visitor's browser or a provider webhook), so no
- * "already sent" record is needed. Best-effort: core logs and skips a handler
- * that throws, and a Twilio failure is written to the error log and never
- * blocks the sale.
+ * sms.send - handle(); payload: to (string, any common phone format), body
+ *            (string). Returns null when this service is off or not
+ *            configured (so the caller can tell nothing handled it), else
+ *            ['sent' => bool, 'detail' => string]. A number that cannot be
+ *            made valid is a failed send, not an exception.
  *
- * Order texts are production-only so dev and staging never text a real
- * customer. The settings page's test button works in any environment.
+ * Whether and when to text (for example only in production) is the caller's
+ * decision, since sending costs money.
  */
 class TwilioSms
 {
     private const MESSAGES_URL = 'https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json';
 
-    public static function orderPaid(array $payload): void
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{sent: bool, detail: string}|null
+     */
+    public static function send(array $payload): ?array
     {
         $config = TwilioConfig::get();
-        if (!self::orderTextsActive($config)) return;
+        $active = ($config->enabled ?? false) && self::isConfigured($config);
+        if (!$active) return null;
 
-        $order = $payload['order'];
-        $to = self::toE164((string) ($order['customer_phone'] ?? ''));
-        if ($to === '') return; // No usable number: nothing to text
+        $to = self::toE164((string) ($payload['to'] ?? ''));
+        if ($to === '') return ['sent' => false, 'detail' => 'error: not a valid phone number'];
 
-        $result = self::send(config: $config, to: $to, body: self::render(template: (string) $config->template, order: $order));
-        $isFailure = !\str_starts_with($result, 'ok');
-        if ($isFailure) \error_log("Twilio SMS for order {$order['order_ref']}: {$result}");
-    }
+        $result = self::deliver(config: $config, to: $to, body: (string) ($payload['body'] ?? ''));
 
-    /**
-     * Fills {name}, {order_ref} and {total} in the template. Name is the
-     * customer's first name only, to keep the text short and friendly.
-     *
-     * @param array<string, mixed> $order
-     */
-    public static function render(string $template, array $order): string
-    {
-        $parts = \preg_split('/\s+/', \trim((string) ($order['customer_name'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $firstName = $parts[0] ?? 'there';
-
-        $currency = (string) ($order['currency'] ?? 'GBP');
-        $symbol = $currency === 'GBP' ? '£' : $currency . ' ';
-        $total = $symbol . \number_format((float) ($order['total_inc_tax'] ?? 0), 2);
-
-        return \strtr($template, [
-            '{name}' => $firstName,
-            '{order_ref}' => (string) ($order['order_ref'] ?? ''),
-            '{total}' => $total,
-        ]);
+        return ['sent' => \str_starts_with($result, 'ok'), 'detail' => $result];
     }
 
     /**
@@ -78,12 +61,12 @@ class TwilioSms
     }
 
     /**
-     * Sends one text. Used by the order hook and the settings page's test
-     * button. Takes the config so the test button can use unsaved values.
+     * Posts one message to Twilio. Used by the hook and the settings page's
+     * test button, which sends even while the service is switched off.
      *
      * @return string "ok: <message sid>" or "error: <reason>"
      */
-    public static function send(object $config, string $to, string $body): string
+    public static function deliver(object $config, string $to, string $body): string
     {
         $sender = (string) $config->sender;
         $fields = ['To' => $to, 'Body' => $body];
@@ -118,12 +101,5 @@ class TwilioSms
         return TwilioConfig::isValidAccountSid((string) ($config->accountSid ?? ''))
             && TwilioConfig::isValidAuthToken((string) ($config->authToken ?? ''))
             && TwilioConfig::isValidSender((string) ($config->sender ?? ''));
-    }
-
-    private static function orderTextsActive(object $config): bool
-    {
-        $isProduction = !\in_array(TwilioConfig::siteEnvironment(), ['dev', 'staging', ''], true);
-
-        return ($config->enabled ?? false) && self::isConfigured($config) && $isProduction;
     }
 }

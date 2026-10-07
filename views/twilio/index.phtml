@@ -39,6 +39,15 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enabled" name="enabled"
+                                <?= ($admin['config']['twilio']['enabled'] ?? false) ? 'checked' : '' ?>>
+                            <label class="form-check-label fw-semibold" for="enabled">Send SMS through Twilio</label>
+                        </div>
+                        <div class="form-text">This service only sends. Whatever wants to text (core or another service) asks it to. Each text is charged by Twilio.</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="account_sid" class="form-label fw-semibold">Account SID</label>
                         <input type="text" class="form-control" id="account_sid" name="account_sid" autocomplete="off"
                             value="<?= \htmlspecialchars($admin['config']['twilio']['accountSid'] ?? '') ?>">
@@ -60,28 +69,6 @@
                     </div>
                 </div>
             </div>
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bx bx-message-dots me-2"></i>Order texts</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="enabled" name="enabled"
-                                <?= ($admin['config']['twilio']['enabled'] ?? false) ? 'checked' : '' ?>>
-                            <label class="form-check-label fw-semibold" for="enabled">Text customers when an order is paid</label>
-                        </div>
-                        <div class="form-text">Production only - never texts a customer from dev or staging. Skips orders with no valid phone number. Each text is charged by Twilio.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="template" class="form-label fw-semibold">Message</label>
-                        <textarea class="form-control" id="template" name="template" rows="3" maxlength="320"><?= \htmlspecialchars($admin['config']['twilio']['template'] ?? '') ?></textarea>
-                        <div class="form-text">You can use {name} (first name), {order_ref} and {total}. About 160 characters fit in one text; longer messages, or ones with emoji, are billed as several.</div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 </form>
@@ -99,7 +86,7 @@
                     <div class="mb-3">
                         <label for="test_number" class="form-label fw-semibold">Mobile number</label>
                         <input type="text" class="form-control" id="test_number" name="test_number" autocomplete="off" placeholder="07700 900123">
-                        <div class="form-text">Sends your saved message with sample order details, using the saved settings (save first). Works on any environment, and is charged like a real text.</div>
+                        <div class="form-text">Sends a short test message using the saved settings (save first). Works even while switched off, and is charged like a real text.</div>
                     </div>
                     <button type="submit" class="btn btn-outline-primary"><i class="bx bx-send me-1"></i> Send test text</button>
                 </div>

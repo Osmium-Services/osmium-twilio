@@ -2,7 +2,7 @@
     "id": "twilio",
     "name": "Twilio SMS",
     "version": "1.0.0",
-    "description": "Texts the customer when an order is paid, through Twilio's Messages API. Admin-editable credentials, sender and message template, plus a test-text button; order texts are production-only",
+    "description": "Send SMS through Twilio's Messages API. Admin-editable credentials and sender, plus a test-text button. A capability for core and other services: answers the sms.send hook",
     "category": "business",
     "author": {
         "name": "Gavin Cox"
@@ -20,7 +20,7 @@
     ],
 
     "hooks": {
-        "order.paid": ["Osmium\\Services\\Twilio\\Models\\TwilioSms::orderPaid"]
+        "sms.send": ["Osmium\\Services\\Twilio\\Models\\TwilioSms::send"]
     },
 
     "admin": {
@@ -48,6 +48,6 @@
     },
 
     "setup": {
-        "postInstallNote": "Disabled by default. Enter the Account SID, Auth Token and a sender (a Twilio number, an alphanumeric sender ID, or a Messaging Service SID) on the Twilio SMS settings page, press Send test text, then switch on Text customers when an order is paid. Order texts only send in production, and only for orders with a valid phone number."
+        "postInstallNote": "Disabled by default. Enter the Account SID, Auth Token and a sender (a Twilio number, an alphanumeric sender ID, or a Messaging Service SID) on the Twilio SMS settings page, press Send test text, then switch on Send SMS through Twilio. This service only sends; whatever wants to text (core or another service) calls the sms.send hook."
     }
 }
