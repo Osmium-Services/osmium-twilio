@@ -1,6 +1,7 @@
 ---
 title: Send text messages with Twilio
 tags: sms, text messages, twilio, notifications, orders
+page: admin/settings/twilio
 ---
 
 **Twilio** lets your site send text messages, such as order updates. The service only sends. Whatever wants to text, such as the shop, asks it to. Each text is charged by Twilio.
